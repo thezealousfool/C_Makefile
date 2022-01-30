@@ -1,11 +1,14 @@
 CC=clang
-CFLAGS=-g -Wall -Werror -Wextra
+CFLAGS=-std=c99 -pedantic -g -Wall -Werror -Wextra
 LDFLAGS=
+DEBUGGER=lldb
 
 CFLAGS_DEBUG=-O0 -g -DDEBUG
-CFLAGS_BUILT=-O2
+CFLAGS_RELEASE=-flto -O2
+LDFLAGS_DEBUG=
+LDFLAGS_RELEASE=-flto
 SRC=src
-OUT=build
+OUT=target
 OBJ=obj
 BIN=proj1
 
@@ -28,17 +31,18 @@ all: run
 test:
 	@echo "No tests implemented yet"
 
-build: $(BIN_RELEASE)
+build: | clean_build $(BIN_RELEASE)
 
-debug: $(BIN_DEBUG)
+debug_build: $(BIN_DEBUG)
 
-print-%  : ; @echo $* = $($*)
+debug: debug_build
+	$(DEBUGGER) $(BIN_DEBUG)
 
-run: | debug
+run: debug_build
 	./$(BIN_DEBUG)
 
 $(BIN_DEBUG): $(OBJS_DEBUG) $(OBJ_DEBUG)
-	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) -o $@ $(LDFLAGS) $<
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) -o $@ $(LDFLAGS) $(LDFLAGS_DEBUG) $<
 
 $(OBJ_DEBUG)/%.o: $(SRC)/%.c $(OBJ_DEBUG)
 	$(CC) -c $(CFLAGS) $(CFLAGS_DEBUG) -o $@ $<
@@ -47,7 +51,7 @@ $(OBJ_DEBUG):
 	mkdir -p $@
 
 $(BIN_RELEASE): $(OBJS_RELEASE) $(OBJ_RELEASE)
-	$(CC) $(CFLAGS) $(CFLAGS_RELEASE) -o $@ $(LDFLAGS) $<
+	$(CC) $(CFLAGS) $(CFLAGS_RELEASE) -o $@ $(LDFLAGS) $(LDFLAGS_RELEASE) $<
 	strip $@
 
 $(OBJ_RELEASE)/%.o: $(SRC)/%.c $(OBJ_RELEASE)
@@ -58,3 +62,6 @@ $(OBJ_RELEASE):
 
 clean:
 	@rm -rf $(OUT)
+
+clean_build:
+	@rm -rf $(OUT)/$(RELEASE)
